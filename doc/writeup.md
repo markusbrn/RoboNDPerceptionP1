@@ -1,27 +1,38 @@
 ### Writeup / README
 
-#### 1. Provide a Writeup / README that includes all the rubric points and how you addressed each one.  You can submit your writeup as markdown or pdf.  
+The perception pipeline for this project consists of the following steps:
 
-You're reading it!
+#### 1. Filter Point Cloud
+In this first step the point cloud message is read with the subscriber pcl_sub and then processed as follows:
 
-### Exercise 1, 2 and 3 pipeline implemented
-#### 1. Complete Exercise 1 steps. Pipeline for filtering and RANSAC plane fitting implemented.
+* Voxel Grid Filtering: Downsampling of the point cloud (size of voxel grid defined with "leaf size" parameter. All points in a voxel are approximated with their centroid. This gives less points to consider for the rest of the perception pipeline.
+* Pass Through Filter: Only Points within a certain space are considered. For this pipeline the z-axis is bounded between 0.6 and 1.1 m.
+* Statistical Outlier Filter: is used to remove noise from the point cloud measurement. Therefore for each point the distance to its neighboring points (50 here) is computed. If the mean is greater than a previously defined threshold (0.01 here) the point is considered to be an outlier).
 
-#### 2. Complete Exercise 2 steps: Pipeline including clustering for segmentation implemented.  
+#### 2. Separate table from pick&place objects and cluster points for each object
 
-#### 2. Complete Exercise 3 Steps.  Features extracted and SVM trained.  Object recognition implemented.
-Here is an example of how to include an image in your writeup.
+* RANSAC table segmentation: The table is identified with the RANSAC algorithm. Next, two point clouds are generated - one for the table and the other for the objects on the table.
+* Euclidian Clustering: With the function euclidian clustering the points from the "objects" cloud are segmented and a new cluster cloud is generated that contains all objects with individual colors. The result can be seen in the following figure:
 
-![demo-1](https://user-images.githubusercontent.com/20687560/28748231-46b5b912-7467-11e7-8778-3095172b7b19.png)
+![Cluster Cloud](./images/cluster-cloud.png)
 
-### Pick and Place Setup
+#### 3. Train SVM to classify objects in pipeline and apply classifier to pipeline
 
-#### 1. For all three tabletop setups (`test*.world`), perform object recognition, then read in respective pick list (`pick_list_*.yaml`). Next construct the messages that would comprise a valid `PickPlace` request output them to `.yaml` format.
+* To train the classifier a feature set has to be recorded for each of the pick & place objects. This is done with the script "capture_features.py" (from exercise 3 project repo; the models list is adapted to the project requirements). With the script the objects are presented to a camera stick that records the respective point cloud for the object (for different aspect angles). From this point cloud then the features are extracted (which are color and surface normal histograms in this case). The code for this can be found in the file "features.py" from exercise 3.
+* Next the classifier is trained with the script "train_svm.py" from the exercise 3 project repo. The normalized confusion matrix that is output by the script can be seen in the following figure:
 
-And here's another image! 
-![demo-2](https://user-images.githubusercontent.com/20687560/28748286-9f65680e-7468-11e7-83dc-f1a32380b89c.png)
+![Norm Confusion Matrix](./images/confusion_matrix_norm.png)
 
-Spend some time at the end to discuss your code, what techniques you used, what worked and why, where the implementation might fail and how you might improve it if you were going to pursue this project further.  
+The trained classifier is saved in the file "model.sav".
 
+* When the perception pipeline is started this classifier is loaded and then applied to each element of the cluster point cloud. Therefore for each element of the cluster cloud the histograms for colors and surface normals are extracted and then the object class is predicted for this feature set.
 
+* The labels that the classifier has identified are finally compared with the elements from the pick list and the pick position, place position, gripper arm name, etc. are saved to a .yaml file.
+
+#### 4. Results and discussion
+The result of the classifying operation for world 3 can be seen in the following figure.
+
+![Camera Labeled](./images/camera_labeled.png)
+
+It is evident that the classifier works well - except for objects that are heavily occluded (like the glue in this case). Here it could be helpful to move the robot to get an unobstructed view on the glue as well.
 
