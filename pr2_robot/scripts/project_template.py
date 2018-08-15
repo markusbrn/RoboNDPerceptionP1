@@ -48,9 +48,6 @@ def send_to_yaml(yaml_filename, dict_list):
 
 # Callback function for your Point Cloud Subscriber
 def pcl_callback(pcl_msg):
-
-# Exercise-2 TODOs:
-
     # Convert ROS msg to PCL data
     cloud = ros_to_pcl(pcl_msg)
 
@@ -77,6 +74,21 @@ def pcl_callback(pcl_msg):
     passthrough.set_filter_field_name(filter_axis)
     axis_min = 0.6
     axis_max = 1.1
+    passthrough.set_filter_limits(axis_min, axis_max)
+
+    # Finally use the filter function to obtain the resultant point cloud. 
+    cloud_filtered = passthrough.filter()
+    ############################################################################
+
+    ## PassThrough filter ######################################################
+    # Create a PassThrough filter object.
+    passthrough = cloud_filtered.make_passthrough_filter()
+
+    # Assign axis and range to the passthrough filter object.
+    filter_axis = 'y'
+    passthrough.set_filter_field_name(filter_axis)
+    axis_min = -0.5
+    axis_max = 0.5
     passthrough.set_filter_limits(axis_min, axis_max)
 
     # Finally use the filter function to obtain the resultant point cloud. 
@@ -129,7 +141,7 @@ def pcl_callback(pcl_msg):
     # NOTE: These are poor choices of clustering parameters
     # Your task is to experiment and find values that work for segmenting objects.
     ec.set_ClusterTolerance(0.01)
-    ec.set_MinClusterSize(300)
+    ec.set_MinClusterSize(100)
     ec.set_MaxClusterSize(4000)
     # Search the k-d tree for clusters
     ec.set_SearchMethod(tree)
@@ -219,7 +231,7 @@ def pr2_mover(object_list):
 
     # Parse parameters into individual variables
     test_scene_num = Int32()
-    test_scene_num.data = 1
+    test_scene_num.data = 3
 
     # TODO: Rotate PR2 in place to capture side tables for the collision map
 

@@ -36,3 +36,8 @@ The result of the classifying operation for world 3 can be seen in the following
 
 It is evident that the classifier works well - except for objects that are heavily occluded (like the glue in this case). Here it could be helpful to move the robot to get an unobstructed view on the glue as well.
 
+#### 4. Future Work
+Next I could work on the pick & place part of the project where - with the pick list as basis - the robot actually grasps the obects and drops them in the respective boxes on the side of the robot.
+
+Another interesting topic might be to replace the SVM classifier with a neural network. Here I would especially like to see if a cnn-like approach with filter kernels sliding over the point cloud data performs even better than the SVM (where - if I am correct? - the spatial information is not retained in the feature set).
+
